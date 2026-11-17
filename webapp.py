@@ -1,4 +1,5 @@
 import os
+import asyncio
 from flask import render_template, request, jsonify, abort
 from telegram import Bot
 
@@ -24,14 +25,17 @@ def register_routes(app, sessions):
         token = os.environ["BOT_TOKEN"]
         chat_id = sessions[sid]
 
-        bot = Bot(token=token)
-        awaitable = bot.send_photo(
-            chat_id=chat_id,
-            photo=media.stream,
-            caption="صورة أرسلها الزائر بموافقته"
-        )
+        async def send():
+            async with Bot(token=token) as bot:
+                await bot.send_photo(
+                    chat_id=chat_id,
+                    photo=media.stream,
+                    caption="صورة أرسلها الزائر بموافقته"
+                )
 
-        import asyncio
-        asyncio.run(awaitable)
-
-        return jsonify(ok=True)
+        try:
+            asyncio.run(send())
+            return jsonify(ok=True)
+        except Exception:
+            app.logger.exception("Photo upload failed")
+            return jsonify(ok=False, error="تعذر إرسال الصورة"), 500
