@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>التقاط صورة</title>
+  <style>
+    body {
+      font-family: Arial;
+      text-align: center;
+      background: #f4f4f4;
+      padding: 25px;
+    }
+    .box {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      max-width: 400px;
+      margin: auto;
+    }
+    video, canvas {
+      width: 100%;
+      border-radius: 10px;
+      margin-top: 15px;
+    }
+    button {
+      padding: 12px 20px;
+      margin: 8px;
+      border: 0;
+      border-radius: 8px;
+      background: #168b65;
+      color: white;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>التقاط صورة</h2>
+    <p>بموافقتك، يمكنك تشغيل الكاميرا والتقاط صورة وإرسالها إلى صاحب الصفحة.</p>
+
+    <button id="start">تشغيل الكاميرا</button>
+    <video id="video" autoplay playsinline hidden></video>
+    <canvas id="canvas" hidden></canvas>
+
+    <div>
+      <button id="capture" hidden>التقاط صورة</button>
+      <button id="send" hidden>إرسال الصورة</button>
+    </div>
+
+    <p id="status"></p>
+  </div>
+
+<script>
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const status = document.getElementById('status');
+let stream = null;
+let photo = null;
+
+document.getElementById('start').onclick = async () => {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: false
+    });
+   
