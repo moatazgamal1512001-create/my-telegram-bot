@@ -18,30 +18,20 @@ def register_routes(app, sessions):
         media = request.files.get("media")
         kind = request.form.get("kind")
 
-        if not media or kind not in ("photo", "video"):
+        if not media or kind != "photo":
             return jsonify(ok=False, error="ملف غير صالح"), 400
 
         token = os.environ["BOT_TOKEN"]
         chat_id = sessions[sid]
 
-        caption = (
-            "ملف أرسله المستخدم بموافقته: "
-            + ("صورة" if kind == "photo" else "فيديو")
+        bot = Bot(token=token)
+        awaitable = bot.send_photo(
+            chat_id=chat_id,
+            photo=media.stream,
+            caption="صورة أرسلها الزائر بموافقته"
         )
 
-        bot = Bot(token=token)
-
-        if kind == "photo":
-            bot.send_photo(
-                chat_id=chat_id,
-                photo=media.stream,
-                caption=caption
-            )
-        else:
-            bot.send_video(
-                chat_id=chat_id,
-                video=media.stream,
-                caption=caption
-            )
+        import asyncio
+        asyncio.run(awaitable)
 
         return jsonify(ok=True)
