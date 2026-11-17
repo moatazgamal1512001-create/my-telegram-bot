@@ -20,4 +20,69 @@ button{padding:12px 20px;margin:8px;border:0;border-radius:8px;background:#168b6
 <canvas id="canvas" hidden></canvas>
 <div>
 <button id="capture" hidden>التقاط صورة</button>
-<button id="send
+<button id="send" hidden>إرسال الصورة</button>
+</div>
+<p id="status"></p>
+</div>
+
+<script>
+const sid = {{ sid|tojson }};
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const status = document.getElementById("status");
+let stream = null;
+let photo = null;
+
+document.getElementById("start").onclick = async () => {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: false
+    });
+    video.srcObject = stream;
+    video.hidden = false;
+    document.getElementById("capture").hidden = false;
+    status.textContent = "الكاميرا تعمل. التقط صورة عندما تكون مستعدًا.";
+  } catch (error) {
+    status.textContent = "تعذر تشغيل الكاميرا. تحقق من إذن الكاميرا.";
+  }
+};
+
+document.getElementById("capture").onclick = () => {
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext("2d").drawImage(video, 0, 0);
+  canvas.hidden = false;
+  canvas.toBlob(blob => {
+    photo = blob;
+    document.getElementById("send").hidden = false;
+    status.textContent = "راجع الصورة واضغط إرسال إذا كنت موافقًا.";
+  }, "image/jpeg");
+};
+
+document.getElementById("send").onclick = async () => {
+  if (!photo) return;
+
+  const data = new FormData();
+  data.append("media", photo, "photo.jpg");
+  data.append("kind", "photo");
+
+  try {
+    const response = await fetch(`/upload/${encodeURIComponent(sid)}`, {
+      method: "POST",
+      body: data
+    });
+    status.textContent = response.ok
+      ? "تم إرسال الصورة بنجاح."
+      : "تعذر إرسال الصورة.";
+  } catch (error) {
+    status.textContent = "حدث خطأ أثناء الإرسال.";
+  }
+};
+
+window.addEventListener("pagehide", () => {
+  if (stream) stream.getTracks().forEach(track => track.stop());
+});
+</script>
+</body>
+</html>
